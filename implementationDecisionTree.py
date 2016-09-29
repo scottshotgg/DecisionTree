@@ -78,13 +78,13 @@ def entropy(yes, no):
 
 # Used for counting the Yes and No values from a 2xn array containing the classes and attributes
 def countYN(datapassed):
-	array = [0, 0]
+	arr = [0, 0]
 	for classs in datapassed['y']:
 		if classs == ord("p"):
-			array[1] += 1
+			arr[1] += 1
 		elif classs == ord("e"):
-			array[0] += 1
-	return array
+			arr[0] += 1
+	return arr
 
 
 # Used for calculating the seperating the classes and counting them, probably way more complex than it needs to be
@@ -205,7 +205,7 @@ def findExpectedClass(choice, var):
 					#print expectedvalue
 					#break
 
-def findBranches(splitvaluearray, attprobability):
+def findBranches(choice, splitvaluearray, attprobability):
 	branches = {}
 	valueinc = 0
 	for value in splitvaluearray:
@@ -220,7 +220,7 @@ def findBranches(splitvaluearray, attprobability):
 	return branches
 
 
-def findData(choice, value):
+def findData(data, choice, value):
 
 	arrayx = []
 	arrayy = []
@@ -233,125 +233,48 @@ def findData(choice, value):
 	return {'x': arrayx, 'y':arrayy}
 
 
-def computeBranches(choice, branches):
+def computeBranches(data, choice, branches):
 	print branches
 
 	branchData = {}
 	for value in branches:
 		print value
-		branchData[value] = findData(choice, value)
+		branchData[value] = findData(data, choice, value)
 
 	return branchData
 
 
-data = stripFile("mush_train.data")
-
-for r in range(1):
-
-	array = [0] * 2
-
-	array = countYN(data)
-
-	print "counted data", array
-
-	base = entropy(float(array[1]), float(array[0]))
-
-	stuffarray = calculateInformationGain(data)
-
-	#print stuffarray[0]
-	#print base
-
-	choice = calculateNextDecision(base, stuffarray[0])
-
-	attprobability = stuffarray[1][choice - 1]
-	splitvaluearray = stuffarray[2][choice - 1]
-
+def sequence(branche, level):
+	calculateInformationGain(branche)
+	arrayyy = countYN(branche)
+	print "counted data", arrayyy
+	based = entropy(float(arrayyy[1]), float(arrayyy[0]))
+	stuffedarray = calculateInformationGain(branche)
+	choice = calculateNextDecision(based, stuffedarray[0])
+	attprobability = stuffedarray[1][choice - 1]
+	splitvaluearray = stuffedarray[2][choice - 1]
 	print splitvaluearray
 	print attprobability
+	branchesFound = findBranches(choice, splitvaluearray, attprobability)
+	if len(branchesFound) == 0:
+		print "\n\n\n\n\n\n\n END \n\n\n\n\n\n\n"
+	else:	
+		branchesComputered = computeBranches(branche, choice, branchesFound)
 
-	branchesFound = findBranches(splitvaluearray, attprobability)
-	branchesComputed = computeBranches(choice, branchesFound)
-
-	for branch in branchesComputed:
-		calculateInformationGain(branchesComputed[branch])
-		arrayyy = countYN(branchesComputed[branch])
-		print "counted data", arrayyy
-		based = entropy(float(arrayyy[1]), float(arrayyy[0]))
-		stuffedarray = calculateInformationGain(branchesComputed[branch])
-		mychoice = calculateNextDecision(based, stuffedarray[0])
-
+		print "BRANCHES: ", len(branchesComputered)
+		for branc in branchesComputered:
+			print "\n\n\n\n\n\LEVEL", level ,"\n\n\n\n\n"
+			sequence(branchesComputered[branc], level + 1)
 
 
+data = stripFile("mush_train.data")
 
 
+branchesComputed = data
+level = 0
 
-
-	'''
-	highestIndex = 0
-	highest = 1
-	highestincr = 0
-
-	for value in attprobability:
-		if value < highest and value != 0:
-			highest = value
-			highestIndex = highestincr
-
-		highestincr += 1
-
-	print highestIndex
-	print highest
-
-
-	splitvaluearray = stuffarray[2][choice - 1]
-
-	print "split value is", splitvaluearray[highestIndex]
-	print attprobability
-
-	# need a function to calculate the expected values
-	#calculateExpectedValues(splitvaluearray, attprobability)
-
-	print "\n"
-	valueincr = 0
-	for value in splitvaluearray:
-		if attprobability[valueincr] == 0:
-			print value
-			vary = 0
-			for nextvalue in data['x']:
-				#print nextvalue
-				if chr(nextvalue[choice - 1]) == value:
-					#print value
-					expectedval = data['y'][vary]
-					print "expected value", chr(expectedval)
-					vary += 1
-					break
-				vary += 1
-		valueincr += 1
-
-
-	newdata = {}
-	datarrayx = []
-	datarrayy = []
-	for line in range(len(data['x'])):
-		#print "char", chr(data['x'][line][choice - 1])
-		#print "splitvaluearray char", splitvaluearray[highestIndex]
-		if chr(data['x'][line][choice - 1]) == splitvaluearray[highestIndex]:
-			#print data['x'][line]
-			datarrayx.append(data['x'][line])
-			datarrayy.append(data['y'][line])
-
-	newdata['x'] = datarrayx
-	newdata['y'] = datarrayy
-
-	print len(newdata['x']), len(newdata['y'])
-	data = newdata
-
-#chooseAttribute(choice, data)
-
-#array = countYN()
-'''
-
-
-
-
+print "\n\n\n\n\n\LEVEL", level ,"\n\n\n\n\n"
+sequence(branchesComputed, level + 1)
+		
 
 
