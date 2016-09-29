@@ -77,8 +77,9 @@ def entropy(yes, no):
 
 
 # Used for counting the Yes and No values from a 2xn array containing the classes and attributes
-def countYN(data):
-	for classs in data['y']:
+def countYN(datapassed):
+	array = [0, 0]
+	for classs in datapassed['y']:
 		if classs == ord("p"):
 			array[1] += 1
 		elif classs == ord("e"):
@@ -194,25 +195,58 @@ def calculateInformationGain(data):
 
 #def chooseAttribute(choice, data):
 
-def calculateExpectedValues(array, probarray):
-	print array
-	for value in range(len(array)):
-		print "arrayvalue: ", array[value]
-		if probarray[value] == 0:
-			print probarray[value]
-			for line in range(len(data['x'])):
-				print chr(data['x'][line][value])
+def findExpectedClass(choice, var):
+	for line in range(len(data['x'])):
+		#print chr(data['x'][line][choice - 1])
+		if chr(data['x'][line][choice - 1]) == var:
+			return chr(data['y'][line])
 				#if chr(data['x'][line][value]) == array[value]:
 					#expectedvalue = data['y'][line]
 					#print expectedvalue
 					#break
 
+def findBranches(splitvaluearray, attprobability):
+	branches = {}
+	valueinc = 0
+	for value in splitvaluearray:
+		if attprobability[valueinc] == 0:
+			expected = findExpectedClass(choice, splitvaluearray[valueinc])
+			print "expected class for", value, "is", expected
+		else:
+			branches[value] = attprobability[valueinc]
 
+		valueinc += 1
+
+	return branches
+
+
+def findData(choice, value):
+
+	arrayx = []
+	arrayy = []
+
+	for line in range(len(data['x'])):
+		if chr(data['x'][line][choice - 1]) == value:
+			arrayx.append(data['x'][line])
+			arrayy.append(data['y'][line])
+
+	return {'x': arrayx, 'y':arrayy}
+
+
+def computeBranches(choice, branches):
+	print branches
+
+	branchData = {}
+	for value in branches:
+		print value
+		branchData[value] = findData(choice, value)
+
+	return branchData
 
 
 data = stripFile("mush_train.data")
 
-for r in range(5):
+for r in range(1):
 
 	array = [0] * 2
 
@@ -230,8 +264,29 @@ for r in range(5):
 	choice = calculateNextDecision(base, stuffarray[0])
 
 	attprobability = stuffarray[1][choice - 1]
+	splitvaluearray = stuffarray[2][choice - 1]
+
+	print splitvaluearray
 	print attprobability
 
+	branchesFound = findBranches(splitvaluearray, attprobability)
+	branchesComputed = computeBranches(choice, branchesFound)
+
+	for branch in branchesComputed:
+		calculateInformationGain(branchesComputed[branch])
+		arrayyy = countYN(branchesComputed[branch])
+		print "counted data", arrayyy
+		based = entropy(float(arrayyy[1]), float(arrayyy[0]))
+		stuffedarray = calculateInformationGain(branchesComputed[branch])
+		mychoice = calculateNextDecision(based, stuffedarray[0])
+
+
+
+
+
+
+
+	'''
 	highestIndex = 0
 	highest = 1
 	highestincr = 0
@@ -293,7 +348,7 @@ for r in range(5):
 #chooseAttribute(choice, data)
 
 #array = countYN()
-
+'''
 
 
 
