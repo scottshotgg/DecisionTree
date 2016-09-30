@@ -92,7 +92,7 @@ def calculateInformationGain(data):
 	featureCount = [[dict() for y in range(2)] for x in range(22)]
 	#for feature in data['x'][len(data['x'][0])]:
 	print "featureCount:", featureCount
-	raw_input("me")
+	#raw_input("me")
 	l = 0
 	for line in data['x']:
 		#print len(data['x'])
@@ -196,28 +196,45 @@ def calculateInformationGain(data):
 #def chooseAttribute(choice, data):
 
 def findExpectedClass(choice, var):
+	total = 0
+	cumulativeprob = 0
 	for line in range(len(data['x'])):
 		#print chr(data['x'][line][choice - 1])
 		if chr(data['x'][line][choice - 1]) == var:
-			return chr(data['y'][line])
+			total += 1
+			if chr(data['y'][line]) == 'p':
+				cumulativeprob += 1
+			
 				#if chr(data['x'][line][value]) == array[value]:
 					#expectedvalue = data['y'][line]
 					#print expectedvalue
 					#break
 
+			#print "cumulativeprob!!!", cumulativeprob
+	probability = float(cumulativeprob) / float(total)
+	print "PROBABILITY", probability
+	if probability > .5:
+		return 'p'
+	else:
+		return 'e'
+
 def findBranches(choice, splitvaluearray, attprobability):
 	branches = {}
+	expectedbranches = {}
+
 	valueinc = 0
 	for value in splitvaluearray:
 		if attprobability[valueinc] == 0:
 			expected = findExpectedClass(choice, splitvaluearray[valueinc])
+			expectedbranches[value] = expected
 			print "expected class for", value, "is", expected
 		else:
 			branches[value] = attprobability[valueinc]
 
 		valueinc += 1
 
-	return branches
+	print expectedbranches
+	return [branches, expectedbranches]
 
 
 def findData(data, choice, value):
@@ -256,16 +273,86 @@ def sequence(branche, level):
 	print splitvaluearray
 	print attprobability
 	branchesFound = findBranches(choice, splitvaluearray, attprobability)
-	if len(branchesFound) == 0:
-		print "\n\n\n\n\n\n\n END \n\n\n\n\n\n\n"
+
+	print tree
+	if len(branchesFound[0]) == 0:
+		print "\n\n\n\n\n\n\n END OF THIS SUBTREE \n\n\n\n\n\n\n"
+		print "\n\n\n\n\n\LEVEL", level,"\n\n\n\n\n"
+		try:
+			tree['Level ' + str(level)][str(choice)] = ["-1", branchesFound[1]]
+		except KeyError:
+			try:
+				tree['Level ' + str(level)].append(str(choice))
+				tree['Level ' + str(level)][str(choice)] = ["-1", branchesFound[1]]
+			except KeyError:
+				tree['Level ' + str(level)] = {}
+				tree['Level ' + str(level)][str(choice)] = {}
+				tree['Level ' + str(level)][str(choice)] = ["-1", branchesFound[1]]
+
 	else:	
-		branchesComputered = computeBranches(branche, choice, branchesFound)
+		branchesComputered = computeBranches(branche, choice, branchesFound[0])
 
 		print "BRANCHES: ", len(branchesComputered)
 		for branc in branchesComputered:
+			print "choice", str(choice)
+			print "array", splitvaluearray
+			try:
+				tree['Level ' + str(level)][str(choice)].append([branc, branchesFound[1]]) 
+			except KeyError:
+				tree['Level ' + str(level)] = {}
+				tree['Level ' + str(level)][str(choice)] = [branc, branchesFound[1]] 
 			print "\n\n\n\n\n\LEVEL", level ,"\n\n\n\n\n"
-			sequence(branchesComputered[branc], level + 1)
+			sequence(branchesComputered[branc], level + 2)
 
+
+def classify(datax, datay):
+	searcharray = [0, 2, 4, 6]
+	for level in searcharray:
+		tl = tree['Level ' + str(level)]
+		print tl
+		for attribute in tl.keys():
+			end = 0
+			print "level", level, attribute
+			splitchar = tl[str(attribute)][0]
+			predicted = tl[str(attribute)][1]
+
+			print "predicted", predicted
+			print "split char", splitchar
+
+			lineatt = chr(datax[int(attribute) - 1])
+			print "line attribute", lineatt
+			if lineatt in predicted:
+				print "predicted", predicted[lineatt]
+				print chr(datay)
+				if predicted[lineatt] == chr(datay):
+					return 1
+				else:
+					return 0
+
+			elif lineatt == splitchar:
+				print "going to next level\n"
+
+
+def calculateAccuracy(data):
+	print "Testing ACCURACY: "
+
+	print len(data['x'])
+
+
+	#level = 0
+	cumulativeprob = 0
+	for line in range(len(data['x'])):
+		cumulativeprob += classify(data['x'][line], data['y'][line])
+		print cumulativeprob
+	#classify(data['x'][0], data['y'][0])
+	accuracy = 100 * float(cumulativeprob) / float(len(data['y']))
+
+	return accuracy
+
+
+# "main"
+
+tree = {}
 
 data = stripFile("mush_train.data")
 
@@ -274,7 +361,42 @@ branchesComputed = data
 level = 0
 
 print "\n\n\n\n\n\LEVEL", level ,"\n\n\n\n\n"
-sequence(branchesComputed, level + 1)
+sequence(branchesComputed, level)
+
+
+level = 0
+for value in tree:
+	print "Level", level, tree['Level ' + str(level)]
+	print "\n"
+	level += 2
+
+	#for value in tree['Level' + str(level)]:
+	#	print "Level", level, tree['Level ' + str(level)][value]
+
+print "Training accuracy:"
+acc = calculateAccuracy(data)
+print "\n", acc, "%"
+
+
+raw_input("Press enter for testing data")
+
+data = stripFile("mush_test.data")
+
+
+
+print "Training accuracy:"
+acc = calculateAccuracy(data)
+print "\n", acc, "%"
+
+
+
+
+
+
+
+
+
+
 		
 
 
