@@ -1,9 +1,10 @@
 import os 
 import math
+import sys
 #from sklearn import tree
 
 # Used for stripping the file
-def stripFile(filename):
+def stripFile(filename, percentage):
 	mushrooms = open(filename)
 	y = []
 	x = []
@@ -20,6 +21,16 @@ def stripFile(filename):
 
 		y.append(array[0])
 		x.append(array[1:])
+
+	if percentage != 1:
+		amount = int(len(y) * float(percentage))
+		print len(y)
+		print "amount", amount
+
+		newy = y[0:amount]
+		newx = x[0:amount]
+
+		return {'y': newy, 'x': newx}
 
 	return {'y': y, 'x': x}
 
@@ -92,7 +103,7 @@ def calculateInformationGain(data):
 	featureCount = [[dict() for y in range(2)] for x in range(22)]
 	#for feature in data['x'][len(data['x'][0])]:
 	print "featureCount:", featureCount
-	#raw_input("me")
+	raw_input("me")
 	l = 0
 	for line in data['x']:
 		#print len(data['x'])
@@ -331,6 +342,8 @@ def classify(datax, datay):
 
 			elif lineatt == splitchar:
 				print "going to next level\n"
+	import random
+	return random.uniform(0, 1)
 
 
 def calculateAccuracy(data):
@@ -352,10 +365,12 @@ def calculateAccuracy(data):
 
 # "main"
 
+print sys.argv
+percentage = float(sys.argv[1])
+
 tree = {}
 
-data = stripFile("mush_train.data")
-
+data = stripFile("mush_train.data", percentage)
 
 branchesComputed = data
 level = 0
@@ -363,26 +378,23 @@ level = 0
 print "\n\n\n\n\n\LEVEL", level ,"\n\n\n\n\n"
 sequence(branchesComputed, level)
 
-
 level = 0
 for value in tree:
 	print "Level", level, tree['Level ' + str(level)]
 	print "\n"
 	level += 2
 
-	#for value in tree['Level' + str(level)]:
-	#	print "Level", level, tree['Level ' + str(level)][value]
+raw_input("Press enter for training data")
 
 print "Training accuracy:"
 acc = calculateAccuracy(data)
 print "\n", acc, "%"
-
 
 raw_input("Press enter for testing data")
 
-data = stripFile("mush_test.data")
+data = stripFile("mush_test.data", 1)
 
-
+print len(data['y'])
 
 print "Training accuracy:"
 acc = calculateAccuracy(data)
@@ -391,12 +403,4 @@ print "\n", acc, "%"
 
 
 
-
-
-
-
-
-
-		
-
-
+print tree
